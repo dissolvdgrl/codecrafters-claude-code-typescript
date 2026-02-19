@@ -53,6 +53,7 @@ async function main() {
       const functionArguments = JSON.parse(toolCalls[0].function.arguments);
       const filePath = functionArguments.file_path;
       const fileContents = await Bun.file(filePath).text();
+      console.log(fileContents);
       process.stdout.write(fileContents);
     } else {
       console.error('No tool call found for this command', toolCalls);
