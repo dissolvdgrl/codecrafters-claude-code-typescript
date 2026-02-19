@@ -26,7 +26,17 @@ async function main() {
         type: "function",
         function: {
           name: "Read",
-          description: "Testing the tool advertisement",
+          description: "Read and return the contents of a file",
+          parameters: {
+            type: "object",
+            properties: {
+              file_path: {
+                type: "string",
+                description: "The path to the file to read"
+              }
+            },
+            required: ["file_path"]
+          }
         }
       }
     ]
@@ -36,11 +46,23 @@ async function main() {
     throw new Error("no choices in response");
   }
 
+  const toolCalls = response.choices[0].message.tool_calls;
+
+  if (toolCalls && toolCalls.length > 0) {
+    if (toolCalls[0].function.name === "Read") {
+      const functionArguments = JSON.parse(toolCalls[0].function.arguments);
+      const filePath = functionArguments.file_path;
+      const fileContents = await Bun.file(filePath).text();
+      process.stdout.write(fileContents);
+    } else {
+      console.error('No tool call found for this command', toolCalls);
+    }
+  }
+
   // You can use print statements as follows for debugging, they'll be visible when running tests.
   console.error("Logs from your program will appear here!");
 
-  // TODO: Uncomment the lines below to pass the first stage
-  console.log(response.choices[0].message.content);
+  console.log(response.choices[0].message);
 }
 
 main();
