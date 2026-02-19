@@ -53,17 +53,16 @@ async function main() {
       const functionArguments = JSON.parse(toolCalls[0].function.arguments);
       const filePath = functionArguments.file_path;
       const fileContents = await Bun.file(filePath).text();
-      console.log(fileContents);
       process.stdout.write(fileContents);
     } else {
       console.error('No tool call found for this command', toolCalls);
     }
+  } else {
+    const message = response.choices[0].message;
+    if (message.content) {
+      process.stdout.write(message.content);
+    }
   }
-
-  // You can use print statements as follows for debugging, they'll be visible when running tests.
-  console.error("Logs from your program will appear here!");
-
-  console.log(response.choices[0].message);
 }
 
 main();
