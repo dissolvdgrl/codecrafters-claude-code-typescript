@@ -41,7 +41,6 @@ async function main() {
         required: ["file_path"]
       },
     },
-    call: ({ file_path }: { file_path: string }) => readFileSync(file_path, 'utf8'),
   };
 
   const writeTool = {
@@ -64,17 +63,19 @@ async function main() {
         }
       },
     },
-    call: ({ file_path, content }: { file_path: string, content: string }) => writeFileSync(file_path, content),
   };
 
+  const readToolCall = ({ file_path }: { file_path: string }) => readFileSync(file_path, 'utf8');
+  const writeToolCall = ({ file_path, content }: { file_path: string, content: string }) => writeFileSync(file_path, content);
+
   const messages: Message[] = [{ role: "user", content: prompt }];
-  const toolBelt = [readTool, writeTool];
+  const tools = [readTool, writeTool];
 
   while (true) {
     const response = await client.chat.completions.create({
       model: "anthropic/claude-haiku-4.5",
       messages: messages,
-      tools: toolBelt,
+      tools: tools,
     });
 
     if (!response.choices || response.choices.length === 0) {
@@ -92,7 +93,7 @@ async function main() {
     for (const toolCall of toolCalls) {
       if (toolCall.type === "function") {
         const functionName = toolCall.function.name;
-        const tool = toolBelt.find(
+        const tool = tools.find(
             (tool) => tool.function.name === functionName,
         );
         if (!tool) {
@@ -100,7 +101,14 @@ async function main() {
         }
 
         const args = JSON.parse(toolCall.function.arguments);
-        const result = tool.call(args) ?? null;
+        let result = null;
+        if (toolCall.function.name === "Read") {
+          result = readToolCall(args.content);
+        }
+
+        if (toolCall.function.name === "Write") {
+          result = writeToolCall(args);
+        }
 
         messages.push({
           role: "tool",
