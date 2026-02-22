@@ -1,4 +1,5 @@
 import OpenAI from "openai";
+import { writeFileSync } from "fs";
 
 interface Message {
   role: "user" | "assistant" | "tool";
@@ -41,21 +42,19 @@ async function main() {
   };
   const writeTool = {
     type: "function",
-    function: {
-      name: "Write",
-      description: "Write content to a file",
-      parameters: {
-        type: "object",
-        required: ["file_path", "content"],
-        properties: {
-          file_path: {
-            type: "string",
-            description: "The path of the file to write to"
-          },
-          content: {
-            type: "string",
-            description: "The content to write to the file"
-          }
+    name: "Write",
+    description: "Write content to a file",
+    parameters: {
+      type: "object",
+      required: ["file_path", "content"],
+      properties: {
+        file_path: {
+          type: "string",
+          description: "The path of the file to write to"
+        },
+        content: {
+          type: "string",
+          description: "The content to write to the file"
         }
       }
     }
@@ -85,17 +84,23 @@ async function main() {
 
     for (const toolCall of toolCalls) {
       if (toolCall.type === "function") {
-        const tool = toolBelt.find((tool) => tool.name === toolCall.function.name);
-
+        const functionName = toolCall.function.name;
+        const tool = toolBelt.find(
+            (tool) => tool.name === functionName,
+        );
         if (!tool) {
           continue;
         }
-        const args = JSON.parse(toolCall.function.arguments);
-        const result = await tool.function(args);
+
+        const result = ({tool.parameters.properties.file_path, tool.parameters.properties.content}) => {
+          writeFileSync(tool.parameters.properties.file_path, tool.parameters.properties.content);
+        }
+
+
         messages.push({
           role: "tool",
           tool_call_id: toolCall.id,
-          content: result
+          content: JSON.stringify(result),
         });
       }
     }
