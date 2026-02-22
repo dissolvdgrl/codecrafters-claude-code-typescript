@@ -95,7 +95,8 @@ async function main() {
 
     const toolCalls = response.choices[0].message.tool_calls;
 
-    if (!toolCalls || toolCalls.length === 0) {
+    if (response.choices[0].message.content && (!toolCalls || toolCalls.length === 0)) {
+      console.log(response.choices[0].message.content);
       break;
     }
 
@@ -125,11 +126,6 @@ async function main() {
           content: JSON.stringify(result),
         });
       }
-    }
-
-    if (response.choices[0].message.content) {
-      console.log(response.choices[0].message.content);
-      break;
     }
   }
 }
