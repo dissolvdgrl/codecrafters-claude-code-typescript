@@ -65,8 +65,13 @@ async function main() {
     },
   };
 
-  const readToolCall = ({ file_path }: { file_path: string }) => readFileSync(file_path, 'utf8');
-  const writeToolCall = ({ file_path, content }: { file_path: string, content: string }) => writeFileSync(file_path, content);
+  const readToolCall = ({ file_path }: { file_path: string }) => {
+    return readFileSync(file_path, 'utf8');
+  }
+
+  const writeToolCall = ({ file_path, content }: { file_path: string, content: string }) => {
+    return writeFileSync(file_path, content);
+  }
 
   const messages: Message[] = [{ role: "user", content: prompt }];
   const tools = [readTool, writeTool];
@@ -90,6 +95,10 @@ async function main() {
 
     const toolCalls = response.choices[0].message.tool_calls;
 
+    if (!toolCalls || toolCalls.length === 0) {
+      break;
+    }
+
     for (const toolCall of toolCalls) {
       if (toolCall.type === "function") {
         const functionName = toolCall.function.name;
@@ -103,7 +112,7 @@ async function main() {
         const args = JSON.parse(toolCall.function.arguments);
         let result = null;
         if (toolCall.function.name === "Read") {
-          result = readToolCall(args.content);
+          result = readToolCall(args);
         }
 
         if (toolCall.function.name === "Write") {
