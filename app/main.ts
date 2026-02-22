@@ -27,37 +27,42 @@ async function main() {
 
   const readTool = {
     type: "function",
-    name: "Read",
-    description: "Read content from a file",
-    parameters: {
-      type: "object",
-      properties: {
-        file_path: {
-          type: "string",
-          description: "The path to the file to read"
-        }
+    function: {
+      name: "Read",
+      description: "Read content from a file",
+      parameters: {
+        type: "object",
+        properties: {
+          file_path: {
+            type: "string",
+            description: "The path to the file to read"
+          }
+        },
+        required: ["file_path"]
       },
-      required: ["file_path"]
     },
     call: ({ file_path }: { file_path: string }) => readFileSync(file_path, 'utf8'),
   };
+
   const writeTool = {
     type: "function",
-    name: "Write",
-    description: "Write content to a file",
-    parameters: {
-      type: "object",
-      required: ["file_path", "content"],
-      properties: {
-        file_path: {
-          type: "string",
-          description: "The path of the file to write to"
-        },
-        content: {
-          type: "string",
-          description: "The content to write to the file"
+    function: {
+      name: "Write",
+      description: "Write content to a file",
+      parameters: {
+        type: "object",
+        required: ["file_path", "content"],
+        properties: {
+          file_path: {
+            type: "string",
+            description: "The path of the file to write to"
+          },
+          content: {
+            type: "string",
+            description: "The content to write to the file"
+          }
         }
-      }
+      },
     },
     call: ({ file_path, content }: { file_path: string, content: string }) => writeFileSync(file_path, content),
   };
@@ -88,7 +93,7 @@ async function main() {
       if (toolCall.type === "function") {
         const functionName = toolCall.function.name;
         const tool = toolBelt.find(
-            (tool) => tool.name === functionName,
+            (tool) => tool.function.name === functionName,
         );
         if (!tool) {
           continue;
