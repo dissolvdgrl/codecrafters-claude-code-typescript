@@ -1,5 +1,5 @@
 import OpenAI from "openai";
-import { writeFileSync } from "fs";
+import { writeFileSync, readFileSync } from "fs";
 
 interface Message {
   role: "user" | "assistant" | "tool";
@@ -38,7 +38,8 @@ async function main() {
         }
       },
       required: ["file_path"]
-    }
+    },
+    call: ({ file_path }: { file_path: string }) => readFileSync(file_path, 'utf8'),
   };
   const writeTool = {
     type: "function",
@@ -57,7 +58,8 @@ async function main() {
           description: "The content to write to the file"
         }
       }
-    }
+    },
+    call: ({ file_path, content }: { file_path: string, content: string }) => writeFileSync(file_path, content),
   };
 
   const messages: Message[] = [{ role: "user", content: prompt }];
@@ -92,11 +94,8 @@ async function main() {
           continue;
         }
 
-        console.log(`Calling tool: ${tool}`);
-
-        const result = ({tool.parameters.properties.file_path, tool.parameters.properties.content}) => {
-          writeFileSync(tool.parameters.properties.file_path, tool.parameters.properties.content);
-        }
+        const args = JSON.parse(toolCall.function.arguments);
+        const result = tool.call(args) ?? null;
 
         messages.push({
           role: "tool",
