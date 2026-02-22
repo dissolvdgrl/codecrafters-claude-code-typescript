@@ -1,25 +1,10 @@
 import OpenAI from "openai";
 
 interface Message {
-  role: string;
-  content?: string;
-  tool_call_id?: string;
+  role: "user" | "assistant" | "tool";
+  content?: string | null;
+  tool_call_id?: string | null;
 }
-
-interface Response {
-  role: string,
-  content?: string,
-  tool_calls: [
-    {
-      id: string,
-      function: {
-        name: string,
-        arguments: string,
-      }
-    }
-  ]
-}
-
 
 async function main() {
   const [, , flag, prompt] = process.argv;
@@ -39,12 +24,12 @@ async function main() {
     baseURL: baseURL,
   });
 
-  const conversation = [];
+  const messages: Message[] = [{ role: "user", content: prompt }];
 
   while (true) {
     const response = await client.chat.completions.create({
       model: "anthropic/claude-haiku-4.5",
-      messages: [{ role: "user", content: prompt }],
+      messages: messages,
       tools: [
         {
           type: "function",
@@ -70,10 +55,10 @@ async function main() {
       throw new Error("no choices in response");
     }
 
-    conversation.push({
+    messages.push({
       role: "assistant",
       content: response.choices[0].message.content ?? null,
-      ...(response.choices[0].message.tool_calls ? { tool_calls: response.choices[0].message.tool_calls } : {})
+      ...(response.choices[0].message.tool_calls ? {tool_calls: response.choices[0].message.tool_calls} : {})
     });
 
     const toolCalls = response.choices[0].message.tool_calls;
@@ -83,18 +68,20 @@ async function main() {
         const functionArguments = JSON.parse(toolCalls[0].function.arguments);
         const filePath = functionArguments.file_path;
         const fileContents = await Bun.file(filePath).text();
-        process.stdout.write(fileContents);
-      } else {
-        console.error('No tool call found for this command', toolCalls);
-      }
-    } else {
-      const message = response.choices[0].message;
-      if (message.content) {
-        process.stdout.write(message.content);
+        messages.push({
+          role: "tool",
+          tool_call_id: toolCalls[0].id,
+          content: fileContents
+        });
       }
       continue;
     }
-    break;
+
+    if (response.choices[0].message.content) {
+      console.log(response.choices[0].message.content);
+    }
+
+     break;
   }
 }
 
