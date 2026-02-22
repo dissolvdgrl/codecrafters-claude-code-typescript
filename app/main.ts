@@ -92,10 +92,11 @@ async function main() {
           continue;
         }
 
+        console.log(`Calling tool: ${tool}`);
+
         const result = ({tool.parameters.properties.file_path, tool.parameters.properties.content}) => {
           writeFileSync(tool.parameters.properties.file_path, tool.parameters.properties.content);
         }
-
 
         messages.push({
           role: "tool",
