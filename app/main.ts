@@ -70,7 +70,8 @@ async function main() {
   }
 
   const writeToolCall = ({ file_path, content }: { file_path: string, content: string }) => {
-    return writeFileSync(file_path, content);
+    writeFileSync(file_path, content);
+    return `Successfully wrote to ${file_path}`;
   }
 
   const messages: Message[] = [{ role: "user", content: prompt }];
