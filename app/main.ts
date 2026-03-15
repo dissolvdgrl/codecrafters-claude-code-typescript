@@ -1,5 +1,6 @@
 import OpenAI from "openai";
 import { writeFileSync, readFileSync } from "fs";
+import * as child_process from "node:child_process";
 
 interface Message {
   role: "user" | "assistant" | "tool";
@@ -65,6 +66,24 @@ async function main() {
     },
   };
 
+  const bashTool = {
+    type: "function",
+    function: {
+      name: "Bash",
+      description: "Execute a shell command",
+      parameters: {
+        type: "object",
+        required: ["command"],
+        properties: {
+          command: {
+            type: "string",
+            description: "The command to execute"
+          },
+        }
+      },
+    },
+  };
+
   const readToolCall = ({ file_path }: { file_path: string }) => {
     return readFileSync(file_path, 'utf8');
   }
@@ -72,6 +91,10 @@ async function main() {
   const writeToolCall = ({ file_path, content }: { file_path: string, content: string }) => {
     writeFileSync(file_path, content);
     return `Successfully wrote to ${file_path}`;
+  }
+
+  const bashToolCall = ({ command }: { command: string }) => {
+    return child_process.exec(command);
   }
 
   const messages: Message[] = [{ role: "user", content: prompt }];
@@ -113,12 +136,17 @@ async function main() {
 
         const args = JSON.parse(toolCall.function.arguments);
         let result = null;
+
         if (toolCall.function.name === "Read") {
           result = readToolCall(args);
         }
 
         if (toolCall.function.name === "Write") {
           result = writeToolCall(args);
+        }
+
+        if (toolCall.function.name === "Bash") {
+          result = bashToolCall(args);
         }
 
         messages.push({
