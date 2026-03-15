@@ -1,6 +1,6 @@
 import OpenAI from "openai";
 import { writeFileSync, readFileSync } from "fs";
-import * as child_process from "node:child_process";
+import { execSync } from "child_process";
 
 interface Message {
   role: "user" | "assistant" | "tool";
@@ -94,7 +94,7 @@ async function main() {
   }
 
   const bashToolCall = ({ command }: { command: string }) => {
-    return child_process.exec(command);
+    return execSync(command, { encoding: "utf8" });
   }
 
   const messages: Message[] = [{ role: "user", content: prompt }];
