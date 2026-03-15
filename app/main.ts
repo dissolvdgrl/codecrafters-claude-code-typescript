@@ -98,7 +98,7 @@ async function main() {
   }
 
   const messages: Message[] = [{ role: "user", content: prompt }];
-  const tools = [readTool, writeTool];
+  const tools = [readTool, writeTool, bashTool];
 
   while (true) {
     const response = await client.chat.completions.create({
