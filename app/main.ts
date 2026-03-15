@@ -94,7 +94,7 @@ async function main() {
   }
 
   const bashToolCall = ({ command }: { command: string }) => {
-    return execSync(command, { encoding: "utf8" });
+    return execSync(command).toString();
   }
 
   const messages: Message[] = [{ role: "user", content: prompt }];
